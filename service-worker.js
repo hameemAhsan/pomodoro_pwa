@@ -1,13 +1,15 @@
-const CACHE_NAME = 'focus-targets-pwa-v1.0.0';
+const CACHE_NAME = 'focus-targets-pwa-v1.0.3';
+const BASE_PATH = '/pomodoro_pwa/';
+
 const APP_SHELL = [
-  './',
-  './index.html',
-  './styles.css',
-  './app.js',
-  './manifest.json',
-  './offline.html',
-  './assets/icon-192.png',
-  './assets/icon-512.png'
+  BASE_PATH,
+  `${BASE_PATH}index.html`,
+  `${BASE_PATH}styles.css`,
+  `${BASE_PATH}app.js`,
+  `${BASE_PATH}manifest.json`,
+  `${BASE_PATH}offline.html`,
+  `${BASE_PATH}assets/icon-192.png`,
+  `${BASE_PATH}assets/icon-512.png`
 ];
 
 self.addEventListener('install', event => {
@@ -24,11 +26,16 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
-      const copy = response.clone();
-      caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-      return response;
-    }).catch(() => caches.match('./offline.html')))
+    caches.match(event.request).then(cached => {
+      if (cached) return cached;
+
+      return fetch(event.request).then(response => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+        return response;
+      }).catch(() => caches.match(`${BASE_PATH}offline.html`));
+    })
   );
 });
