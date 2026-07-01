@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="A local-first custom Pomodoro focus timer with category targets and reports.">
+  <title>Focus Targets</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Local-first PWA</p>
+        <h1>Focus Targets</h1>
+      </div>
+      <div class="top-actions">
+        <button id="installBtn" class="ghost small hidden" type="button">Install</button>
+        <button id="themeToggle" class="icon-btn" type="button" aria-label="Toggle theme">◐</button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <section id="view-today" class="view active-view" data-view="today">
+        <div class="hero-card">
+          <div>
+            <p class="eyebrow" id="todayDateLabel">Today</p>
+            <h2 id="todayTotal">0m focused</h2>
+            <p id="todaySubtext">Start a focus block to build today’s record.</p>
+          </div>
+          <div class="ring-wrap" aria-label="Today target completion">
+            <svg class="progress-ring" width="118" height="118" viewBox="0 0 118 118">
+              <circle class="ring-bg" cx="59" cy="59" r="50"></circle>
+              <circle id="todayRing" class="ring-fg" cx="59" cy="59" r="50"></circle>
+            </svg>
+            <div class="ring-text"><strong id="todayPercent">0%</strong><span>target</span></div>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <article class="mini-card">
+            <span>Completed sessions</span>
+            <strong id="todayCompleted">0</strong>
+          </article>
+          <article class="mini-card">
+            <span>Focus streak</span>
+            <strong id="streakCount">0 days</strong>
+          </article>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Category progress</p>
+              <h3>Today vs targets</h3>
+            </div>
+            <button class="ghost small" type="button" data-nav="focus">Start</button>
+          </div>
+          <div id="todayCategoryProgress" class="progress-list"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Recent work</p>
+              <h3>Today’s sessions</h3>
+            </div>
+          </div>
+          <div id="todaySessions" class="session-list empty-state"></div>
+        </section>
+      </section>
+
+      <section id="view-focus" class="view" data-view="focus">
+        <section class="timer-card">
+          <div class="timer-mode-row">
+            <span id="timerModePill" class="pill focus">Focus</span>
+            <span id="timerRoundLabel" class="muted">Round 1 of 1</span>
+          </div>
+          <div class="timer-display" id="timerDisplay">25:00</div>
+          <div class="timer-progress-shell">
+            <div id="timerProgressBar" class="timer-progress-fill"></div>
+          </div>
+          <p id="timerStatus" class="timer-status">Choose a category and start your focus block.</p>
+
+          <div class="timer-controls">
+            <button id="startBtn" class="primary" type="button">Start</button>
+            <button id="pauseBtn" class="secondary hidden" type="button">Pause</button>
+            <button id="resumeBtn" class="secondary hidden" type="button">Resume</button>
+            <button id="resetBtn" class="danger-soft" type="button">Reset</button>
+          </div>
+
+          <div id="partialActions" class="partial-actions hidden">
+            <p>You have an unfinished focus session.</p>
+            <div>
+              <button id="savePartialBtn" class="primary small" type="button">Save partial</button>
+              <button id="discardPartialBtn" class="ghost small" type="button">Discard</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Session setup</p>
+              <h3>Focus block</h3>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <label>
+              Category
+              <select id="focusCategorySelect"></select>
+            </label>
+            <label>
+              Focus minutes
+              <input id="focusMinutesInput" type="number" min="1" max="240" step="1" value="25">
+            </label>
+            <label>
+              Break minutes
+              <input id="breakMinutesInput" type="number" min="1" max="120" step="1" value="5">
+            </label>
+            <label>
+              Rounds
+              <input id="roundsInput" type="number" min="1" max="12" step="1" value="1">
+            </label>
+            <label class="wide">
+              Session note / goal
+              <input id="sessionNoteInput" type="text" maxlength="120" placeholder="Example: Finish stats practice set">
+            </label>
+          </div>
+
+          <div class="settings-row compact">
+            <label class="switch-line"><input id="autoBreakInput" type="checkbox" checked> Auto-start break after focus</label>
+            <label class="switch-line"><input id="autoNextFocusInput" type="checkbox"> Auto-start next focus after break</label>
+          </div>
+        </section>
+      </section>
+
+      <section id="view-categories" class="view" data-view="categories">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Setup</p>
+              <h3>Categories and daily targets</h3>
+            </div>
+          </div>
+          <form id="categoryForm" class="form-grid category-form">
+            <input id="categoryIdInput" type="hidden">
+            <label>
+              Category name
+              <input id="categoryNameInput" type="text" placeholder="MBA Study" required>
+            </label>
+            <label>
+              Daily target minutes
+              <input id="categoryTargetInput" type="number" min="0" step="5" value="60" required>
+            </label>
+            <label>
+              Color
+              <input id="categoryColorInput" type="color" value="#2563eb">
+            </label>
+            <div class="form-actions wide">
+              <button class="primary" type="submit">Save category</button>
+              <button id="cancelCategoryEditBtn" class="ghost" type="button">Clear</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Your categories</p>
+              <h3>Target list</h3>
+            </div>
+          </div>
+          <div id="categoryList" class="category-list"></div>
+        </section>
+      </section>
+
+      <section id="view-reports" class="view" data-view="reports">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Reports</p>
+              <h3>Performance range</h3>
+            </div>
+            <label class="range-picker">Last
+              <select id="reportRangeSelect"></select>
+              days
+            </label>
+          </div>
+          <div class="grid three">
+            <article class="mini-card"><span>Total focus</span><strong id="reportTotal">0m</strong></article>
+            <article class="mini-card"><span>Target hit</span><strong id="reportPercent">0%</strong></article>
+            <article class="mini-card"><span>Completed</span><strong id="reportCompleted">0</strong></article>
+          </div>
+          <div id="reportBars" class="report-bars"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Daily trend</p>
+              <h3>Last selected days</h3>
+            </div>
+          </div>
+          <div id="dailyTrend" class="trend-chart"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">History</p>
+              <h3>Recent sessions</h3>
+            </div>
+            <button id="exportCsvBtn" class="ghost small" type="button">Export CSV</button>
+          </div>
+          <div id="historyList" class="session-list"></div>
+        </section>
+      </section>
+
+      <section id="view-settings" class="view" data-view="settings">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Preferences</p>
+              <h3>Timer defaults</h3>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label>
+              Default focus minutes
+              <input id="defaultFocusInput" type="number" min="1" max="240" step="1">
+            </label>
+            <label>
+              Default break minutes
+              <input id="defaultBreakInput" type="number" min="1" max="120" step="1">
+            </label>
+            <label>
+              Default rounds
+              <input id="defaultRoundsInput" type="number" min="1" max="12" step="1">
+            </label>
+          </div>
+          <div class="settings-row">
+            <label class="switch-line"><input id="soundEnabledInput" type="checkbox"> Sound alerts</label>
+            <label class="switch-line"><input id="vibrationEnabledInput" type="checkbox"> Vibration alerts</label>
+            <label class="switch-line"><input id="notificationsEnabledInput" type="checkbox"> Browser notifications</label>
+          </div>
+          <div class="form-actions">
+            <button id="saveSettingsBtn" class="primary" type="button">Save settings</button>
+            <button id="testChimeBtn" class="ghost" type="button">Test chime</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Data</p>
+              <h3>Backup and restore</h3>
+            </div>
+          </div>
+          <div class="backup-actions">
+            <button id="exportJsonBtn" class="secondary" type="button">Export JSON backup</button>
+            <label class="file-button">
+              Import JSON backup
+              <input id="importJsonInput" type="file" accept="application/json,.json">
+            </label>
+            <button id="clearDataBtn" class="danger-soft" type="button">Clear all data</button>
+          </div>
+          <p class="muted small-text">Data is stored only inside this browser/device. Export JSON before changing phones or clearing browser storage.</p>
+        </section>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+      <button class="nav-btn active" type="button" data-nav="today">⌂<span>Today</span></button>
+      <button class="nav-btn" type="button" data-nav="focus">◉<span>Focus</span></button>
+      <button class="nav-btn" type="button" data-nav="categories">◆<span>Categories</span></button>
+      <button class="nav-btn" type="button" data-nav="reports">▣<span>Reports</span></button>
+      <button class="nav-btn" type="button" data-nav="settings">⚙<span>Settings</span></button>
+    </nav>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
